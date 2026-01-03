@@ -107,21 +107,28 @@ end
 
 ---@param opts {region:string, log_group:log_group, log_stream?:log_stream, interactive:boolean}
 local function tail(opts)
-    local terminal_group = 'aws logs start-live-tail'
+    local terminal_group = 'aws logs'
+    -- if opts.interactive then terminal_group = 'aws logs start-live-tail' else terminal_group = 'aws logs tail' end
 
-    local terminal_command = terminal_group ..
-        ' --region ' .. opts.region .. ' --log-group-identifiers ' .. opts.log_group.logGroupArn
+    local terminal_command
+    if opts.interactive then
+        terminal_command = terminal_group .. ' start-live-tail' ..
+            ' --region ' .. opts.region ..
+            ' --log-group-identifiers ' .. opts.log_group.logGroupArn ..
+            ' --mode interactive'
+    else
+        terminal_command = terminal_group .. ' tail' ..
+            ' --region ' .. opts.region ..
+            ' ' .. opts.log_group.logGroupName ..
+            ' --follow --format json'
+    end
 
-    local terminal_title = opts.log_group.logGroupName
+    local terminal_title
     if opts.log_stream then
         terminal_title = opts.log_stream.logStreamName
         terminal_command = terminal_command .. ' --log-stream-names ' .. opts.log_stream.logStreamName
-    end
-
-    if opts.interactive then
-        terminal_command = terminal_command .. ' --mode interactive'
     else
-        terminal_command = terminal_command .. ' --mode print-only'
+        terminal_title = opts.log_group.logGroupName
     end
 
     tmux.open { group = terminal_group, title = terminal_title, command = terminal_command }
@@ -172,7 +179,7 @@ function M.tail_log_stream(args)
 end
 
 function M.tail_log_list()
-    local panes = tmux.list({ group = 'aws logs start-live-tail' })
+    local panes = tmux.list({ group = 'aws logs' })
     if not panes then
         return util.warn('No CloudWatch tails are active')
     end
@@ -182,18 +189,18 @@ function M.tail_log_list()
     local items = {}
     for idx, item in ipairs(panes.panes) do
         table.insert(items, {
-            formatted = item.title,
+            idx = idx,
+            score = idx,
             text = idx .. ' ' .. item.title,
             item = item,
-            idx = idx,
+            formatted = item.title,
         })
     end
-
 
     picker.pick {
         title = 'CloudWatch Live Tails',
         items = items,
-        format = picker.format.ui_select(nil, #items),
+        format = 'text',
         preview = function(ctx)
             ctx.preview:reset()
             ctx.preview:set_title(ctx.item.item.title)
