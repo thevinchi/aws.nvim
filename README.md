@@ -32,7 +32,7 @@ return {
     },
     keys = {
         { '<leader>A',   '',                                             desc = 'AWS' },
-        { '<leader>Ar', '<cmd>AwSetRegion<CR>',                          desc = 'Set default Region' },
+        { '<leader>Ar', '<cmd>AwsSetRegion<CR>',                          desc = 'Set default Region' },
         { '<leader>Ac',  '',                                             desc = 'CloudWatch' },
         { '<leader>Acg', '<cmd>AwsCloudWatchTailGroup<CR>',              desc = 'Tail a Log Group' },
         { '<leader>AcG', '<cmd>AwsCloudWatchTailGroup interactive<CR>',  desc = 'Tail a Log Group interactively' },
